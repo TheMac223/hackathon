@@ -19,30 +19,23 @@ def extract_bytes_from_pdf(pdf_path):
     return byte_data
 
 # 검증 함수
-def validate_model(model_path, pdf_folder_path, scaler_path):
+def validate_model(model_path, pdf_path, scaler_path):
     # iForest 모델 및 스케일러 로드
     iforest = joblib.load(model_path)
     scaler = joblib.load(scaler_path)
-
-    # 폴더 내 모든 PDF 파일 경로를 리스트에 추가
-    pdf_paths = [os.path.join(pdf_folder_path, file) for file in os.listdir(pdf_folder_path) if file.endswith('.pdf')]
-
-    for pdf_path in pdf_paths:
-        print(f"Processing {pdf_path}")  # PDF 파일 경로 출력
-        bytes_from_pdf = extract_bytes_from_pdf(pdf_path)
-        
-        # 데이터 정규화
-        byte_data_normalized = scaler.transform(bytes_from_pdf)
-
-        # 모델을 사용한 예측
-        predictions = iforest.predict(byte_data_normalized)
-
-        # 예측 결과 출력: -1은 이상치, 1은 정상
-        for i, pred in enumerate(predictions):
-            if pred == -1:
-              break
-              
-        return pred
+    print(f"Processing {pdf_path}")  # PDF 파일 경로 출력
+    bytes_from_pdf = extract_bytes_from_pdf(pdf_path)
+    
+    # 데이터 정규화
+    byte_data_normalized = scaler.transform(bytes_from_pdf)
+    # 모델을 사용한 예측
+    predictions = iforest.predict(byte_data_normalized)
+    # 예측 결과 출력: -1은 이상치, 1은 정상
+    for i, pred in enumerate(predictions):
+        if pred == -1:
+          break
+          
+    return pred
 
 # 모델 및 스케일러 경로 설정
 model_path = '/content/drive/MyDrive/iforest_byte_model2.pkl'
@@ -50,4 +43,4 @@ scaler_path = '/content/drive/MyDrive/scaler2.pkl'
 pdf_folder_path = '/content/drive/MyDrive/문서경호/malicious_pdf'  # 테스트용 PDF 경로 설정
 
 # 모델 검증
-validate_model(model_path, pdf_folder_path, scaler_path)
+res = validate_model(model_path, pdf_folder_path, scaler_path)
