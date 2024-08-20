@@ -1,7 +1,7 @@
 import numpy as np
 import joblib
+import os
 import fitz  # PyMuPDF
-from sklearn.preprocessing import StandardScaler
 
 # PDF 파일에서 바이트 데이터 추출 (200KB 한정)
 def extract_bytes_from_pdf(pdf_path):
@@ -18,26 +18,36 @@ def extract_bytes_from_pdf(pdf_path):
     byte_data = np.array(byte_data)
     return byte_data
 
-# 모델 사용 함수
-def use_model(model_path, scaler_path, pdf_path):
+# 검증 함수
+def validate_model(model_path, pdf_folder_path, scaler_path):
+    # iForest 모델 및 스케일러 로드
     iforest = joblib.load(model_path)
     scaler = joblib.load(scaler_path)
 
-    bytes_from_pdf = extract_bytes_from_pdf(pdf_path)
+    # 폴더 내 모든 PDF 파일 경로를 리스트에 추가
+    pdf_paths = [os.path.join(pdf_folder_path, file) for file in os.listdir(pdf_folder_path) if file.endswith('.pdf')]
 
-    byte_data_normalized = scaler.transform(bytes_from_pdf)
+    for pdf_path in pdf_paths:
+        print(f"Processing {pdf_path}")  # PDF 파일 경로 출력
+        bytes_from_pdf = extract_bytes_from_pdf(pdf_path)
+        
+        # 데이터 정규화
+        byte_data_normalized = scaler.transform(bytes_from_pdf)
 
-    predictions = iforest.predict(byte_data_normalized)
+        # 모델을 사용한 예측
+        predictions = iforest.predict(byte_data_normalized)
 
-    # 예측 결과 출력: -1은 이상치, 1은 정상
-    for i, pred in enumerate(predictions):
-        status = "정상" if pred == 1 else "이상치"
-        print(f"Page {i + 1} of {pdf_path} is classified as {status}")
+        # 예측 결과 출력: -1은 이상치, 1은 정상
+        for i, pred in enumerate(predictions):
+            if pred == -1:
+              break
+              
+        return pred
 
 # 모델 및 스케일러 경로 설정
-model_path = 'iforest_byte_model.pkl'
-scaler_path = 'scaler.pkl'
-pdf_path = '/content/drive/MyDrive/문서경호/test_pdf/test_file.pdf'  # 테스트할 PDF 경로 설정
+model_path = '/content/drive/MyDrive/iforest_byte_model2.pkl'
+scaler_path = '/content/drive/MyDrive/scaler2.pkl'
+pdf_folder_path = '/content/drive/MyDrive/문서경호/malicious_pdf'  # 테스트용 PDF 경로 설정
 
-# 모델 사용
-use_model(model_path, scaler_path, pdf_path)
+# 모델 검증
+validate_model(model_path, pdf_folder_path, scaler_path)
